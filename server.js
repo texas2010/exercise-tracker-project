@@ -2,10 +2,12 @@
 const express = require('express')
 const cors = require('cors')
 const bodyParser = require('body-parser')
+const { ObjectID } = require('mongodb')
 if (process.env.NODE_ENV !== 'production') { require('dotenv').config() }
 
 const { mongoose } = require('./db/mongoose');
 const { User } = require('./models/user')
+const { Exercise } = require('./models/exercise')
 const app = express()
 
 
@@ -31,7 +33,6 @@ app.post('/api/exercise/new-user', (req, res) => {
       _id: doc._id
     })
   }).catch((error) => {
-    console.log('first error', error);
     if (error.errors && error.errors.username) {
       res.send(error.errors.username.message)
     } else if (error.keyValue && error.keyValue.username) {
@@ -45,13 +46,56 @@ app.post('/api/exercise/new-user', (req, res) => {
 
 app.get('/api/exercise/users', (req, res) => {
   User.find().then((docs) => {
-      if (!docs) {
-        return res.send('users is not exist')
-      }
-      res.json(docs)
+    if (!docs) {
+      return res.send('users is not exist')
+    }
+    res.json(docs)
   }).catch((error) => {
     res.send('not found')
   })
+})
+
+app.post('/api/exercise/add', (req, res) => {
+  // console.log(req.body);
+  const {
+    userId,
+    description,
+    duration,
+    date
+  } = req.body
+
+  if (!ObjectID.isValid(userId)) {
+    return res.status(404).send('userId is not found')
+  }
+  const exerciseData = new Exercise({
+    userId,
+    description,
+    duration,
+    date: date || Date.now()
+  })
+
+  exerciseData.save().then((doc) => {
+    User.findById(userId).then((user) => {
+        if (!user) {
+          return res.status(404).send('userId is not found')
+        }
+        res.json({
+          _id: doc._id,
+          username: user.username,
+          date: doc.date.toDateString(),
+          duration: doc.duration,
+          description: doc.description
+        })
+    }).catch((error) => {
+      res.status(400).send()
+    })
+  }).catch((error => {
+    if (error.errors && error.errors.userId || error.errors.description || error.errors.duration) {
+      res.send('Some information is required.')
+    } else {
+      res.send('something wrong and failed to save data.')
+    }
+  }))
 })
 
 
