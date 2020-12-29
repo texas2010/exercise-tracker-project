@@ -81,7 +81,7 @@ app.post('/api/exercise/add', (req, res) => {
 
     exerciseData.save().then((doc) => {
       res.json({
-        _id: doc._id,
+        _id: doc.userId,
         username: user.username,
         date: new Date(doc.date).toDateString(),
         duration: doc.duration,
