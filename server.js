@@ -76,7 +76,7 @@ app.post('/api/exercise/add', (req, res) => {
       userId,
       description,
       duration,
-      date: date || Date.now()
+      date: date ? new Date(date) : new Date()
     })
 
     exerciseData.save().then((doc) => {
