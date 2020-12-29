@@ -56,7 +56,6 @@ app.get('/api/exercise/users', (req, res) => {
 })
 
 app.post('/api/exercise/add', (req, res) => {
-  // console.log(req.body);
   const {
     userId,
     description,
@@ -67,35 +66,63 @@ app.post('/api/exercise/add', (req, res) => {
   if (!ObjectID.isValid(userId)) {
     return res.status(404).send('userId is not found')
   }
-  const exerciseData = new Exercise({
-    userId,
-    description,
-    duration,
-    date: date || Date.now()
+
+  User.findById(userId).then((user) => {
+    if (!user) {
+      return res.status(404).send('userId is not found')
+    }
+
+    const exerciseData = new Exercise({
+      userId,
+      description,
+      duration,
+      date: date || Date.now()
+    })
+
+    exerciseData.save().then((doc) => {
+      res.json({
+        _id: doc._id,
+        username: user.username,
+        date: new Date(doc.date).toDateString(),
+        duration: doc.duration,
+        description: doc.description
+      })
+    }).catch((error => {
+      if (error.errors && error.errors.userId || error.errors.description || error.errors.duration) {
+        res.send('Some information is required.')
+      } else {
+        res.send('something wrong and failed to save data.')
+      }
+    }))
+
+  }).catch((error) => {
+    res.status(400).send()
   })
 
-  exerciseData.save().then((doc) => {
-    User.findById(userId).then((user) => {
-        if (!user) {
-          return res.status(404).send('userId is not found')
-        }
-        res.json({
-          _id: doc._id,
-          username: user.username,
-          date: doc.date.toDateString(),
-          duration: doc.duration,
-          description: doc.description
-        })
-    }).catch((error) => {
-      res.status(400).send()
-    })
-  }).catch((error => {
-    if (error.errors && error.errors.userId || error.errors.description || error.errors.duration) {
-      res.send('Some information is required.')
-    } else {
-      res.send('something wrong and failed to save data.')
-    }
-  }))
+
+
+  // exerciseData.save().then((doc) => {
+  //   User.findById(userId).then((user) => {
+  //     if (!user) {
+  //       return res.status(404).send('userId is not found')
+  //     }
+  //     res.json({
+  //       _id: doc._id,
+  //       username: user.username,
+  //       date: doc.date.toDateString(),
+  //       duration: doc.duration,
+  //       description: doc.description
+  //     })
+  //   }).catch((error) => {
+  //     res.status(400).send()
+  //   })
+  // }).catch((error => {
+  //   if (error.errors && error.errors.userId || error.errors.description || error.errors.duration) {
+  //     res.send('Some information is required.')
+  //   } else {
+  //     res.send('something wrong and failed to save data.')
+  //   }
+  // }))
 })
 
 
