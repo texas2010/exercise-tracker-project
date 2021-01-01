@@ -99,30 +99,50 @@ app.post('/api/exercise/add', (req, res) => {
     res.status(400).send()
   })
 
+})
 
+app.get('/api/exercise/log', (req, res) => {
+  console.clear()
+  console.log(req.query);
+  const {
+    userId
+  } = req.query
 
-  // exerciseData.save().then((doc) => {
-  //   User.findById(userId).then((user) => {
-  //     if (!user) {
-  //       return res.status(404).send('userId is not found')
-  //     }
-  //     res.json({
-  //       _id: doc._id,
-  //       username: user.username,
-  //       date: doc.date.toDateString(),
-  //       duration: doc.duration,
-  //       description: doc.description
-  //     })
-  //   }).catch((error) => {
-  //     res.status(400).send()
-  //   })
-  // }).catch((error => {
-  //   if (error.errors && error.errors.userId || error.errors.description || error.errors.duration) {
-  //     res.send('Some information is required.')
-  //   } else {
-  //     res.send('something wrong and failed to save data.')
-  //   }
-  // }))
+  if (!ObjectID.isValid(userId)) {
+    return res.status(404).send('userId is not found')
+  }
+
+  User.findById(userId).then((userDoc) => {
+    if (!userDoc) {
+      return res.status(404).send('userId is not found')
+    }
+
+    Exercise.find({ userId }).then((docs) => {
+      console.log(docs);
+
+      const newDocs = docs.map(item => ({
+        description: item.description,
+        duration: item.duration,
+        date: new Date(item.date).toDateString()
+      }))
+
+      res.json({
+        _id: userDoc._id,
+        username: userDoc.username,
+        count: docs.length,
+        logs: newDocs,
+      })
+
+    }).catch((error) => {
+      console.log(error);
+      res.send('something wrong??')
+    })
+
+  }).catch((error) => {
+    console.log(error);
+    res.send('something wrong??')
+  })
+
 })
 
 
