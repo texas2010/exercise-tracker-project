@@ -102,41 +102,50 @@ app.post('/api/exercise/add', (req, res) => {
 })
 
 app.get('/api/exercise/log', (req, res) => {
-  console.clear()
-  console.log(req.query);
   const {
-    userId
+    userId,
+    from,
+    to,
+    limit
   } = req.query
+
 
   if (!ObjectID.isValid(userId)) {
     return res.status(404).send('userId is not found')
   }
+
 
   User.findById(userId).then((userDoc) => {
     if (!userDoc) {
       return res.status(404).send('userId is not found')
     }
 
-    Exercise.find({ userId }).then((docs) => {
-      console.log(docs);
+    Exercise.find({
+      userId,
+      date: {
+        $gt: from ? new Date(from).getTime() : 0,
+        $lt: to ? new Date(to).getTime() : Date.now()
+      },
+    }).limit(parseInt(limit))
+      .then((docs) => {
 
-      const newDocs = docs.map(item => ({
-        description: item.description,
-        duration: item.duration,
-        date: new Date(item.date).toDateString()
-      }))
+        const newDocs = docs.map(item => ({
+          description: item.description,
+          duration: item.duration,
+          date: new Date(item.date).toDateString()
+        }))
 
-      res.json({
-        _id: userDoc._id,
-        username: userDoc.username,
-        count: docs.length,
-        log: newDocs,
+        res.json({
+          _id: userDoc._id,
+          username: userDoc.username,
+          count: docs.length,
+          log: newDocs,
+        })
+
+      }).catch((error) => {
+        console.log(error);
+        res.send('something wrong??')
       })
-
-    }).catch((error) => {
-      console.log(error);
-      res.send('something wrong??')
-    })
 
   }).catch((error) => {
     console.log(error);
