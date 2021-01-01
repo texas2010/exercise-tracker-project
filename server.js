@@ -130,7 +130,7 @@ app.get('/api/exercise/log', (req, res) => {
         _id: userDoc._id,
         username: userDoc.username,
         count: docs.length,
-        logs: newDocs,
+        log: newDocs,
       })
 
     }).catch((error) => {
